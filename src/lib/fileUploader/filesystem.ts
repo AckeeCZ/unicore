@@ -5,7 +5,7 @@ import * as path from 'path';
 
 declare module 'express-serve-static-core' {
     interface Request {
-        files: string[];
+        files: any;
     }
 }
 

@@ -70,7 +70,7 @@ const saveFiles = (bucket: Bucket, files: Express.Multer.File[], options: Option
     );
 };
 
-module.exports = (options: Options): RequestHandler => {
+export default (options: Options): RequestHandler => {
     options = assignOptions(options);
     const storageClient = iniStorageClient(options);
     const bucket = storageClient.bucket(options.bucket);

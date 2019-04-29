@@ -1,1 +1,1 @@
-export { default as math } from './lib/math';
+export * from './lib';

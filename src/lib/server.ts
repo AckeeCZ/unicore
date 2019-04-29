@@ -1,7 +1,8 @@
 import express from 'express';
 import * as core from 'express-serve-static-core';
+import { bindExpress as bindSentry, SentrySettings } from 'lib/monitoring/sentry';
 import { Omit } from 'lodash';
-import { bindExpress as bindSentry, SentrySettings } from 'monitoring/sentry';
+import destroyable from 'server-destroy';
 import override from './util/override';
 
 export interface ServerOptions {
@@ -11,6 +12,7 @@ export interface ServerOptions {
 declare module 'express-serve-static-core' {
     interface Extended {
         startAt: Date;
+        destroy: () => Promise<void>;
     }
     // Override default App
     interface Express extends Extended {}
@@ -20,14 +22,22 @@ declare module 'express-serve-static-core' {
 
 type PromisedListen = (...args: Parameters<core.Express['listen']>) => Promise<core.Express>;
 const patchListen = (app: core.Express) => (listen: core.Express['listen']): PromisedListen => {
+    app.destroy = () => Promise.reject(new Error('Server did not start yet'));
     return (...args) => {
         return new Promise((resolve, reject) => {
-            listen(
+            const server = listen(
                 ...args,
                 // TODO: Fix types for the last arg
                 // @ts-ignore
-                error => (error ? reject(error) : resolve(app))
+                error => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    destroyable(server);
+                    resolve(server);
+                }
             );
+            app.destroy = async () => server.destroy();
         });
     };
 };
@@ -35,7 +45,7 @@ const patchListen = (app: core.Express) => (listen: core.Express['listen']): Pro
 export const createServer = (options?: ServerOptions) => {
     const app = express();
     app.startAt = new Date();
-    bindSentry(app, options ? options.sentry : {});
+    bindSentry(app, options && options.sentry);
     override(app, 'listen', patchListen(app));
     return (app as any) as ({ listen: PromisedListen } & Omit<typeof app, 'listen'>);
 };
