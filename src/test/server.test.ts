@@ -138,7 +138,7 @@ describe('Server', () => {
                 fs.unlink(body[0], (err, ...results) => (err ? reject(err) : resolve(results)))
             );
         });
-        // Skipped for secrets purposes
+        // Skipped for shared secrets problem
         it.skip('GCP Bucket', async () => {
             const options = {
                 bucket: process.env.GCP_STORAGE_BUCKET || 'ackee__unicore',
@@ -151,7 +151,7 @@ describe('Server', () => {
                     res.json(req.files);
                 });
 
-            const fileName = 'test/test-image.png';
+            const fileName = 'src/test/test-image.png';
             const { body } = await request(server)
                 .post('/files')
                 .attach('image', fileName)
@@ -167,6 +167,10 @@ describe('Server', () => {
                 fs.readFileSync(fileName),
             ]);
             expect(originalFile).toEqual(uploadedFile);
+            // Delete the file from fs
+            await new Promise((resolve, reject) =>
+                fs.unlink(body[0], (err, ...results) => (err ? reject(err) : resolve(results)))
+            );
         });
     });
 });
