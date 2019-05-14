@@ -19,7 +19,7 @@ const assignOptions = (givenOptions: Options) => {
     if (typeof givenOptions !== 'object') {
         throw new TypeError('GcpBucket uploader options are invalid - not an object.');
     }
-    (['bucket', 'credentials', 'projectId'] as Array<keyof Options>).forEach(propName => {
+    (['bucket'] as Array<keyof Options>).forEach(propName => {
         if (!givenOptions[propName]) {
             throw new Error(`GcpBucket uploader missing an option: \`${propName}\``);
         }
@@ -33,7 +33,8 @@ const assignOptions = (givenOptions: Options) => {
 };
 
 const iniStorageClient = (options: Options) => {
-    const storage = require('@google-cloud/storage')(options);
+    const { Storage } = require('@google-cloud/storage');
+    const storage = new Storage(options);
     return storage;
 };
 
