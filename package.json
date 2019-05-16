@@ -5,6 +5,9 @@
   "author": "Jiří Šmolík <smolikjirka@gmail.com>",
   "contributors": [],
   "main": "./dist/main.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": "^10.14.0"
   },
