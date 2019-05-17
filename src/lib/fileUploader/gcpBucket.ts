@@ -1,8 +1,8 @@
 import { Bucket } from '@google-cloud/storage';
 import { RequestHandler } from 'express';
-import generateFileStamp from 'lib/util/generateFileStamp';
 import * as path from 'path';
 import { Readable } from 'stream';
+import generateFileStamp from '../util/generateFileStamp';
 
 interface Options {
     prefix?: string;

@@ -1,8 +1,8 @@
 import express from 'express';
 import * as core from 'express-serve-static-core';
-import { bindExpress as bindSentry, SentrySettings } from 'lib/monitoring/sentry';
 import { Omit } from 'lodash';
 import destroyable from 'server-destroy';
+import { bindExpress as bindSentry, SentrySettings } from './monitoring/sentry';
 import override from './util/override';
 
 export interface ServerOptions {

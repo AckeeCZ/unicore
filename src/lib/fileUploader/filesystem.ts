@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import * as fs from 'fs';
-import generateFileStamp from 'lib/util/generateFileStamp';
 import * as path from 'path';
+import generateFileStamp from '../util/generateFileStamp';
 
 declare module 'express-serve-static-core' {
     interface Request {
