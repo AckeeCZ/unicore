@@ -75,7 +75,7 @@ describe('Server', () => {
                     },
                   ],
                 }
-`);
+            `);
         });
     });
     describe('Quick handlers', () => {
@@ -96,18 +96,22 @@ describe('Server', () => {
                 {
                     'My time is': expect.any(String),
                     'I am online since': expect.any(String),
+                    'Application I am running': {
+                        name: expect.any(String),
+                        version: expect.any(String),
+                    },
                 },
                 `
-            Object {
-              "Application I am running": Object {
-                "name": "@ackee/unicore",
-                "version": "0.1.0",
-              },
-              "I am online since": Any<String>,
-              "My time is": Any<String>,
-              "🦄": "Greetings!",
-            }
-`
+                Object {
+                  "Application I am running": Object {
+                    "name": Any<String>,
+                    "version": Any<String>,
+                  },
+                  "I am online since": Any<String>,
+                  "My time is": Any<String>,
+                  "🦄": "Greetings!",
+                }
+            `
             );
         });
     });
