@@ -6,25 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2019-03-15
+## [0.1.4] - 2019-05-17
 ### Added
-- Config and guide for: Travis, Codeclimate, David, Snyk
+- Added base implementation
 
-### Changed
-- Update dependecies
-
-### Removed
-- Coveralls
-
-## [0.0.1] - 2019-03-15
-### Added
-- Changelog
-
-## [0.0.0] - 2018-10-17
-### Added
-- Project template
-
-[Unreleased]: https://github.com/AckeeCZ/desmond/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/AckeeCZ/desmond/compare/v0.0.1...v0.1.0
-[0.0.1]: https://github.com/AckeeCZ/desmond/compare/v0.0.0...v0.0.1
-[0.0.0]: https://github.com/AckeeCZ/desmond/compare/67c5ebd...v0.0.0
+[Unreleased]: https://github.com/AckeeCZ/unicore/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/AckeeCZ/unicore/compare/298eccb...v0.1.4
