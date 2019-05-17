@@ -8,8 +8,8 @@ export interface SentrySettings {
 declare module 'express-serve-static-core' {
     interface Application {
         sentry: {
-            requestHandler: RequestHandler;
-            errorHandler: ErrorRequestHandler;
+            requestHandler: () => RequestHandler;
+            errorHandler: () => ErrorRequestHandler;
             captureException: (error: Error, options?: CaptureOptions) => Promise<string>;
         };
     }
@@ -18,8 +18,8 @@ declare module 'express-serve-static-core' {
 export const bindExpress = (app: Application, settings?: SentrySettings) => {
     if (!settings || !settings.dsn) {
         app.sentry = {
-            requestHandler: (_req, _res, next) => next(),
-            errorHandler: (error, _req, _res, next) => next(error),
+            requestHandler: () => (_req, _res, next) => next(),
+            errorHandler: () => (error, _req, _res, next) => next(error),
             captureException: _error => Promise.resolve('Sentry disabled'),
         };
         return;

@@ -7,7 +7,7 @@ const server = createServer({ sentry: { dsn: 'sentrydsn' } });
 server.use(server.sentry.requestHandler());
 // ...Your handlers and middlewares
 // ...
-// And as final middleware:
+// And as a first error middleware:
 server.use(server.sentry.errorHandler());
 ```
 
