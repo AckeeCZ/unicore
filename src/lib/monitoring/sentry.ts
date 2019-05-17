@@ -16,7 +16,7 @@ declare module 'express-serve-static-core' {
 }
 
 export const bindExpress = (app: Application, settings?: SentrySettings) => {
-    if (!settings) {
+    if (!settings || !settings.dsn) {
         app.sentry = {
             requestHandler: (_req, _res, next) => next(),
             errorHandler: (error, _req, _res, next) => next(error),
