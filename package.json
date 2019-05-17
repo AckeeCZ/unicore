@@ -32,7 +32,8 @@
     "cors": "^2.8.5",
     "express": "^4.16.4",
     "multer": "^1.4.1",
-    "raven": "^2.6.4"
+    "raven": "^2.6.4",
+    "server-destroy": "^1.0.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.4",
@@ -51,7 +52,6 @@
     "prettier": "^1.15.3",
     "prettier-config-ackee": "^0.0.13",
     "request-promise": "^4.2.4",
-    "server-destroy": "^1.0.1",
     "supertest": "^4.0.2",
     "ts-jest": "^24.0.0",
     "tslint-config-ackee": "^0.3.0",
