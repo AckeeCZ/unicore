@@ -1,5 +1,5 @@
 {
-  "name": "@ackee/unicore",
+  "name": "unicore",
   "description": "Standard batteries-included Ackee suit for an API Core.",
   "version": "0.1.4",
   "author": "Jiří Šmolík <smolikjirka@gmail.com>",
