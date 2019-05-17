@@ -1,4 +1,4 @@
-import multer from 'multer';
+import * as multer from 'multer';
 
 declare module 'express-serve-static-core' {
     interface Application {
