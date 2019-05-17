@@ -5,7 +5,9 @@ import {
     createServer,
     defaultFinalHandler,
     defaultRootHandler,
+    errorHandler,
     fileParser,
+    HttpJsonError,
     jsonParser,
     uploadFilesystem,
     uploadGcp,
@@ -114,6 +116,33 @@ describe('Server', () => {
             `
             );
         });
+    });
+    it('HttpJsonError', async () => {
+        const server = createServer()
+            .use((_req, _res, next) => {
+                next(new HttpJsonError(422, 'An error', '123', { foo: 'bar' }));
+            })
+            .use(errorHandler);
+        const { body } = await request(server)
+            .get('/')
+            .expect(422);
+        expect(body).toMatchInlineSnapshot(
+            { error: { stack: expect.any(String) } },
+            `
+            Object {
+              "error": Object {
+                "errorClass": "HttpJsonError",
+                "errorCode": "123",
+                "errorData": Object {
+                  "foo": "bar",
+                },
+                "message": "An error",
+                "stack": Any<String>,
+                "status": 422,
+              },
+            }
+        `
+        );
     });
     describe('File upload', () => {
         it('To FileSystem', async () => {

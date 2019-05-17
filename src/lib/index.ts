@@ -6,3 +6,5 @@ export { default as cors } from './cors';
 export { default as fileParser } from './bodyParsing/fileParser';
 export { default as uploadFilesystem } from './fileUploader/filesystem';
 export { default as uploadGcp } from './fileUploader/gcpBucket';
+export { default as HttpJsonError } from './util/HttpJsonError';
+export { default as errorHandler } from './errorHandler';

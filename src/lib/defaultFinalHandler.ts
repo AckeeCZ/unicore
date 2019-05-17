@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 
-const defaultFinalHandler: RequestHandler = (req, res, _next) => {
+const notFoundHandler: RequestHandler = (req, res, _next) => {
     res.status(404);
     res.json({
         404: 'Not Found',
@@ -8,4 +8,4 @@ const defaultFinalHandler: RequestHandler = (req, res, _next) => {
     });
 };
 
-export default defaultFinalHandler;
+export default notFoundHandler;

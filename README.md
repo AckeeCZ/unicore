@@ -17,6 +17,7 @@ Built on [express](https://github.com/expressjs/express/).
 
 - Promised `listen`.
 - Destroyable server with `.destroy()`.
+- Error processing with serializable `HttpJsonError` and `errorHandler`
 - Includes
     - [tools for handling file\s ](./docs/file-uploads.md)
     - [parsing json](./docs/body-parsers.md)
@@ -31,11 +32,13 @@ import {
     jsonParser,
     defaultFinalHandler,
     defaultRootHandler,
+    errorHandler,
 } from 'unicore';
 
 const server = createServer(options); // Enhanced Express app
 
 server.use(defaultRootHandler);
+server.use(errorHandler);
 server.use(defaultFinalHandler);
 
 server.listen(3000)
