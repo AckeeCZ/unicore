@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import rp from 'request-promise';
-import request from 'supertest';
+import * as rp from 'request-promise';
+import * as request from 'supertest';
 import {
     createServer,
     defaultFinalHandler,
