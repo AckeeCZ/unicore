@@ -11,7 +11,7 @@
 
 Standard batteries-included Ackee suit for an API Core.
 
-Built on [express](https://github.com/expressjs/express/).
+Built on top of [express](https://github.com/expressjs/express/) and [this is all you have to change](./docs/express-migration-guide.md).
 
 ## Features
 
