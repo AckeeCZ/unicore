@@ -1,11 +1,9 @@
 {
   "name": "unicore",
   "description": "Standard batteries-included Ackee suit for an API Core.",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "author": "Jiří Šmolík <smolikjirka@gmail.com>",
-  "contributors": [
-
-  ],
+  "contributors": [],
   "main": "./dist/main.js",
   "publishConfig": {
     "access": "public"
@@ -18,9 +16,7 @@
     "url": "https://github.com/AckeeCZ/unicore"
   },
   "license": "MIT",
-  "keywords": [
-
-  ],
+  "keywords": [],
   "scripts": {
     "build": "tsc",
     "test": "cross-env NODE_PATH=src jest",
