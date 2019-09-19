@@ -1,5 +1,6 @@
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
+import * as http from 'http';
 import { Omit } from 'lodash';
 // @ts-ignore
 import * as destroyable from 'server-destroy';
@@ -21,23 +22,18 @@ declare module 'express-serve-static-core' {
     interface Application extends Extended {}
 }
 
-type PromisedListen = (...args: Parameters<core.Express['listen']>) => Promise<core.Express>;
+type PromisedListen = (...args: Parameters<core.Express['listen']>) => Promise<http.Server>;
 const patchListen = (app: core.Express) => (listen: core.Express['listen']): PromisedListen => {
     app.destroy = () => Promise.reject(new Error('Server did not start yet'));
     return (...args) => {
         return new Promise((resolve, reject) => {
-            const server = listen(
-                ...args,
-                // TODO: Fix types for the last arg
-                // @ts-ignore
-                error => {
-                    if (error) {
-                        return reject(error);
-                    }
-                    destroyable(server);
-                    resolve(server);
+            const server = listen(...args, (error?: Error) => {
+                if (error) {
+                    return reject(error);
                 }
-            );
+                destroyable(server);
+                resolve(server);
+            });
             app.destroy = async () => server.destroy();
         });
     };
