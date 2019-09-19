@@ -12,6 +12,8 @@ interface Options {
     public?: boolean;
 }
 
+type File = Express.Multer.File | { buffer: Buffer | ArrayBuffer; mimetype: string };
+
 const assignOptions = (givenOptions: Options) => {
     if (!givenOptions) {
         throw new Error('GcpBucket uploader missing options. None given.');
@@ -38,7 +40,7 @@ const iniStorageClient = (options: Options) => {
     return storage;
 };
 
-const saveFiles = (bucket: Bucket, files: Express.Multer.File[], options: Options) => {
+export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
     return Promise.all(
         files
             .map(file => ({
