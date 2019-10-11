@@ -45,21 +45,19 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
         files
             .map(file => ({
                 id: generateFileStamp(),
-                buffer: file.buffer,
-                mimetype: file.mimetype,
                 originalFile: file,
             }))
             .map(file => {
                 const fileId = path.posix.join(options.prefix!, file.id);
 
                 const fileStream = new Readable();
-                fileStream.push(file.buffer);
+                fileStream.push(file.originalFile.buffer);
                 fileStream.push(null);
 
                 const uploadParams = {
                     public: options.public,
                     metadata: {
-                        contentType: file.mimetype,
+                        contentType: file.originalFile.mimetype,
                     },
                 };
 
