@@ -81,8 +81,7 @@ export default (options: Options): RequestHandler => {
         if (!req.files || !req.files.length) {
             return next();
         }
-        // TODO Fix types
-        return saveFiles(bucket, req.files as any[], options)
+        return saveFiles(bucket, req.files, options)
             .then(files => {
                 req.files = files;
                 return next();
