@@ -47,6 +47,7 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
                 id: generateFileStamp(),
                 buffer: file.buffer,
                 mimetype: file.mimetype,
+                originalFile: file,
             }))
             .map(file => {
                 const fileId = path.posix.join(options.prefix!, file.id);
@@ -68,7 +69,7 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
                         .pipe(remoteFile)
                         .on('error', reject)
                         .on('finish', resolve)
-                ).then(() => fileId);
+                ).then(() => ({ fileId, originalFile: file.originalFile }));
             })
     );
 };
