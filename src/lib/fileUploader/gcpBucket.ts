@@ -47,7 +47,7 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
                 id: generateFileStamp(),
                 originalFile: file,
             }))
-            .map(file => {
+            .map(async file => {
                 const fileId = path.posix.join(options.prefix!, file.id);
 
                 const fileStream = new Readable();
@@ -62,12 +62,13 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
                 };
 
                 const remoteFile = bucket.file(fileId).createWriteStream(uploadParams);
-                return new Promise((resolve, reject) =>
+                await new Promise((resolve, reject) =>
                     fileStream
                         .pipe(remoteFile)
                         .on('error', reject)
                         .on('finish', resolve)
-                ).then(() => ({ fileId, originalFile: file.originalFile }));
+                );
+                return { fileId, originalFile: file.originalFile };
             })
     );
 };
