@@ -192,7 +192,8 @@ describe('Server', () => {
                 .expect(200);
             expect(Array.isArray(body)).toBe(true);
             expect(body.length).toBe(1);
-            expect(typeof body[0]).toBe('string');
+            expect(typeof body[0]).toBe('object');
+            expect(Object.keys(body[0]).sort()).toEqual(['fileId', 'originalFile'].sort());
 
             // Check file contents
             const [uploadedFile, originalFile] = await Promise.all([

@@ -45,30 +45,30 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
         files
             .map(file => ({
                 id: generateFileStamp(),
-                buffer: file.buffer,
-                mimetype: file.mimetype,
+                originalFile: file,
             }))
-            .map(file => {
+            .map(async file => {
                 const fileId = path.posix.join(options.prefix!, file.id);
 
                 const fileStream = new Readable();
-                fileStream.push(file.buffer);
+                fileStream.push(file.originalFile.buffer);
                 fileStream.push(null);
 
                 const uploadParams = {
                     public: options.public,
                     metadata: {
-                        contentType: file.mimetype,
+                        contentType: file.originalFile.mimetype,
                     },
                 };
 
                 const remoteFile = bucket.file(fileId).createWriteStream(uploadParams);
-                return new Promise((resolve, reject) =>
+                await new Promise((resolve, reject) =>
                     fileStream
                         .pipe(remoteFile)
                         .on('error', reject)
                         .on('finish', resolve)
-                ).then(() => fileId);
+                );
+                return { fileId, originalFile: file.originalFile };
             })
     );
 };
@@ -82,8 +82,7 @@ export default (options: Options): RequestHandler => {
         if (!req.files || !req.files.length) {
             return next();
         }
-        // TODO Fix types
-        return saveFiles(bucket, req.files as any[], options)
+        return saveFiles(bucket, req.files, options)
             .then(files => {
                 req.files = files;
                 return next();
