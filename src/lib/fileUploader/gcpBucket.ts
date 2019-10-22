@@ -10,6 +10,7 @@ interface Options {
     credentials: object | string;
     projectId: string;
     public?: boolean;
+    generateFileName?: (params: { originalFile: File; id: string }) => string;
 }
 
 type File = Express.Multer.File | { buffer: Buffer | ArrayBuffer; mimetype: string };
@@ -48,7 +49,8 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
                 originalFile: file,
             }))
             .map(async file => {
-                const fileId = path.posix.join(options.prefix!, file.id);
+                const fileName = options.generateFileName ? options.generateFileName(file) : file.id;
+                const fileId = path.posix.join(options.prefix!, fileName);
 
                 const fileStream = new Readable();
                 fileStream.push(file.originalFile.buffer);
