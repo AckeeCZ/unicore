@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2019-10-31
+### Fixed
+- upgrade deps (fix #4)
+- **[BREAKING]** drop support for node 6, 7
+
 ## [0.1.9] - 2019-10-03
 ### Fixed
 - add missing exported deps to dev (fix #1)
@@ -27,7 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added base implementation
 
-[Unreleased]: https://github.com/AckeeCZ/unicore/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/AckeeCZ/unicore/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/AckeeCZ/unicore/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/AckeeCZ/unicore/compare/v0.1.9...v0.2.0
 [0.1.9]: https://github.com/AckeeCZ/unicore/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/AckeeCZ/unicore/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/AckeeCZ/unicore/compare/v0.1.6...v0.1.7

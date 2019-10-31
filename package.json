@@ -1,9 +1,11 @@
 {
   "name": "unicore",
   "description": "Standard batteries-included Ackee suit for an API Core.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Jiří Šmolík <smolikjirka@gmail.com>",
-  "contributors": [],
+  "contributors": [
+    "Jaroslav Šmolík <grissius@gmail.com>"
+  ],
   "main": "./dist/main.js",
   "publishConfig": {
     "access": "public"
