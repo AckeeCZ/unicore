@@ -1,7 +1,6 @@
 import * as express from 'express';
 import * as core from 'express-serve-static-core';
 import * as http from 'http';
-import { Omit } from 'lodash';
 // @ts-ignore
 import * as destroyable from 'server-destroy';
 import { bindExpress as bindSentry, SentrySettings } from './monitoring/sentry';
