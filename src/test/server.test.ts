@@ -194,17 +194,13 @@ describe('Server', () => {
             expect(body.length).toBe(1);
             expect(typeof body[0]).toBe('object');
             expect(Object.keys(body[0]).sort()).toEqual(['fileId', 'originalFile'].sort());
-
+            const { fileId } = body[0];
             // Check file contents
             const [uploadedFile, originalFile] = await Promise.all([
-                rp(`https://storage.googleapis.com/${options.bucket}${body[0]}`, { encoding: null }),
+                rp(`https://storage.googleapis.com/${options.bucket}${fileId}`, { encoding: null }),
                 fs.readFileSync(fileName),
             ]);
             expect(originalFile).toEqual(uploadedFile);
-            // Delete the file from fs
-            await new Promise((resolve, reject) =>
-                fs.unlink(body[0], (err, ...results) => (err ? reject(err) : resolve(results)))
-            );
         });
     });
 });

@@ -62,8 +62,8 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
                         contentType: file.originalFile.mimetype,
                     },
                 };
-
-                const remoteFile = bucket.file(fileId).createWriteStream(uploadParams);
+                // File should not have leading slash
+                const remoteFile = bucket.file(fileId.replace(/^\//, '')).createWriteStream(uploadParams);
                 await new Promise((resolve, reject) =>
                     fileStream
                         .pipe(remoteFile)
