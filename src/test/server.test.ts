@@ -19,7 +19,7 @@ describe('Server', () => {
             const server = createServer();
             await new Promise((resolve, reject) =>
                 server
-                    .listen(3000)
+                    .listenAsync(3000)
                     .then(resolve)
                     .catch(reject)
             );
@@ -27,7 +27,7 @@ describe('Server', () => {
         });
         test('Destroyable server', async () => {
             const server = createServer();
-            await server.listen(3000);
+            await server.listenAsync(3000);
             server.destroy();
         });
     });

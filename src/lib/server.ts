@@ -4,7 +4,6 @@ import * as http from 'http';
 // @ts-ignore
 import * as destroyable from 'server-destroy';
 import { bindExpress as bindSentry, SentrySettings } from './monitoring/sentry';
-import override from './util/override';
 
 export interface ServerOptions {
     sentry?: SentrySettings;
@@ -38,12 +37,14 @@ const patchListen = (app: core.Express) => (listen: core.Express['listen']): Pro
     };
 };
 
-export const createServer = (options?: ServerOptions) => {
+type Unicore = core.Express & { listenAsync: PromisedListen };
+
+export const createServer = (options?: ServerOptions): Unicore => {
     const app = express();
     app.startAt = new Date();
     bindSentry(app, options && options.sentry);
-    override(app, 'listen', patchListen(app));
-    return (app as any) as ({ listen: PromisedListen } & Omit<typeof app, 'listen'>);
+    const core = Object.assign(app, { listenAsync: patchListen(app)(app.listen.bind(app)) });
+    return core;
 };
 
 export const createRouter = express.Router;

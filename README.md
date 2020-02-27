@@ -15,7 +15,7 @@ Built on top of [express](https://github.com/expressjs/express/) and [this is al
 
 ## Features
 
-- Promised `listen`.
+- Promised `listenAsync`.
 - Destroyable server with `.destroy()`.
 - Error processing with serializable `HttpJsonError` and `errorHandler`
 - Includes
@@ -41,7 +41,7 @@ server.use(defaultRootHandler);
 server.use(errorHandler);
 server.use(defaultFinalHandler);
 
-server.listen(3000)
+server.listenAsync(3000)
     .then(() => console.log('Listening.'))
     .then(() => server.destroy())
     .then(() => console.log('Server shut down.'));
