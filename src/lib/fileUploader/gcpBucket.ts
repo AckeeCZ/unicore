@@ -1,5 +1,5 @@
 import { Bucket } from '@google-cloud/storage';
-import { RequestHandler } from 'express';
+import { Request, RequestHandler } from 'express';
 import * as path from 'path';
 import { Readable } from 'stream';
 import generateFileStamp from '../util/generateFileStamp';
@@ -10,7 +10,8 @@ interface Options {
     credentials: object | string;
     projectId: string;
     public?: boolean;
-    generateFileName?: (params: { originalFile: File; id: string }) => string;
+    generateFileName?: (params: { originalFile: File; id: string }, options?: Options) => string;
+    request?: Request;
 }
 
 type File = Express.Multer.File | { buffer: Buffer | ArrayBuffer; mimetype: string };
@@ -49,7 +50,7 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
                 originalFile: file,
             }))
             .map(async file => {
-                const fileName = options.generateFileName ? options.generateFileName(file) : file.id;
+                const fileName = options.generateFileName ? options.generateFileName(file, options) : file.id;
                 const fileId = path.posix.join(options.prefix!, fileName);
 
                 const fileStream = new Readable();
@@ -84,7 +85,7 @@ export default (options: Options): RequestHandler => {
         if (!req.files || !req.files.length) {
             return next();
         }
-        return saveFiles(bucket, req.files, options)
+        return saveFiles(bucket, req.files, { ...options, request: req })
             .then(files => {
                 req.files = files;
                 return next();
