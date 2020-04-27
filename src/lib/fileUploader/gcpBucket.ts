@@ -4,26 +4,26 @@ import * as path from 'path';
 import { Readable } from 'stream';
 import generateFileStamp from '../util/generateFileStamp';
 
-interface Options {
+export interface GcpOptions {
     prefix?: string;
     bucket: string;
     credentials: object | string;
     projectId: string;
     public?: boolean;
-    generateFileName?: (params: { originalFile: File; id: string }, options?: Options) => string;
+    generateFileName?: (params: { originalFile: File; id: string }, options?: GcpOptions) => string;
     request?: Request;
 }
 
 type File = Express.Multer.File | { buffer: Buffer | ArrayBuffer; mimetype: string };
 
-const assignOptions = (givenOptions: Options) => {
+const assignOptions = (givenOptions: GcpOptions) => {
     if (!givenOptions) {
         throw new Error('GcpBucket uploader missing options. None given.');
     }
     if (typeof givenOptions !== 'object') {
         throw new TypeError('GcpBucket uploader options are invalid - not an object.');
     }
-    (['bucket'] as Array<keyof Options>).forEach(propName => {
+    (['bucket'] as Array<keyof GcpOptions>).forEach((propName) => {
         if (!givenOptions[propName]) {
             throw new Error(`GcpBucket uploader missing an option: \`${propName}\``);
         }
@@ -36,20 +36,20 @@ const assignOptions = (givenOptions: Options) => {
     return Object.assign({ prefix: '/', public: true }, givenOptions);
 };
 
-const iniStorageClient = (options: Options) => {
+const iniStorageClient = (options: GcpOptions) => {
     const { Storage } = require('@google-cloud/storage');
     const storage = new Storage(options);
     return storage;
 };
 
-export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
+export const saveFiles = (bucket: Bucket, files: File[], options: GcpOptions) => {
     return Promise.all(
         files
-            .map(file => ({
+            .map((file) => ({
                 id: generateFileStamp(),
                 originalFile: file,
             }))
-            .map(async file => {
+            .map(async (file) => {
                 const fileName = options.generateFileName ? options.generateFileName(file, options) : file.id;
                 const fileId = path.posix.join(options.prefix!, fileName);
 
@@ -66,17 +66,14 @@ export const saveFiles = (bucket: Bucket, files: File[], options: Options) => {
                 // File should not have leading slash
                 const remoteFile = bucket.file(fileId.replace(/^\//, '')).createWriteStream(uploadParams);
                 await new Promise((resolve, reject) =>
-                    fileStream
-                        .pipe(remoteFile)
-                        .on('error', reject)
-                        .on('finish', resolve)
+                    fileStream.pipe(remoteFile).on('error', reject).on('finish', resolve)
                 );
                 return { fileId, originalFile: file.originalFile };
             })
     );
 };
 
-export default (options: Options): RequestHandler => {
+export default (options: GcpOptions): RequestHandler => {
     options = assignOptions(options);
     const storageClient = iniStorageClient(options);
     const bucket = storageClient.bucket(options.bucket);
@@ -86,7 +83,7 @@ export default (options: Options): RequestHandler => {
             return next();
         }
         return saveFiles(bucket, req.files, { ...options, request: req })
-            .then(files => {
+            .then((files) => {
                 req.files = files;
                 return next();
             })
