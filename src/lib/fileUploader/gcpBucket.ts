@@ -4,7 +4,7 @@ import * as path from 'path';
 import { Readable } from 'stream';
 import generateFileStamp from '../util/generateFileStamp';
 
-interface GcpOptions {
+interface Options {
     prefix?: string;
     bucket: string;
     credentials: object | string;
@@ -15,14 +15,14 @@ interface GcpOptions {
 
 type File = Express.Multer.File | { buffer: Buffer | ArrayBuffer; mimetype: string };
 
-const assignOptions = (givenOptions: GcpOptions) => {
+const assignOptions = (givenOptions: Options) => {
     if (!givenOptions) {
         throw new Error('GcpBucket uploader missing options. None given.');
     }
     if (typeof givenOptions !== 'object') {
         throw new TypeError('GcpBucket uploader options are invalid - not an object.');
     }
-    (['bucket'] as Array<keyof GcpOptions>).forEach(propName => {
+    (['bucket'] as Array<keyof Options>).forEach(propName => {
         if (!givenOptions[propName]) {
             throw new Error(`GcpBucket uploader missing an option: \`${propName}\``);
         }
@@ -35,13 +35,13 @@ const assignOptions = (givenOptions: GcpOptions) => {
     return Object.assign({ prefix: '/', public: true }, givenOptions);
 };
 
-const iniStorageClient = (options: GcpOptions) => {
+const iniStorageClient = (options: Options) => {
     const { Storage } = require('@google-cloud/storage');
     const storage = new Storage(options);
     return storage;
 };
 
-export const saveFiles = (bucket: Bucket, files: File[], options: GcpOptions, request?: Request) => {
+export const saveFiles = (bucket: Bucket, files: File[], options: Options, request?: Request) => {
     return Promise.all(
         files
             .map(file => ({
@@ -75,7 +75,7 @@ export const saveFiles = (bucket: Bucket, files: File[], options: GcpOptions, re
     );
 };
 
-export default (options: GcpOptions): RequestHandler => {
+export default (options: Options): RequestHandler => {
     options = assignOptions(options);
     const storageClient = iniStorageClient(options);
     const bucket = storageClient.bucket(options.bucket);
