@@ -4,14 +4,13 @@ import * as path from 'path';
 import { Readable } from 'stream';
 import generateFileStamp from '../util/generateFileStamp';
 
-export interface GcpOptions {
+interface GcpOptions {
     prefix?: string;
     bucket: string;
     credentials: object | string;
     projectId: string;
     public?: boolean;
-    generateFileName?: (params: { originalFile: File; id: string }, options?: GcpOptions) => string;
-    request?: Request;
+    generateFileName?: (params: { originalFile: File; id: string }, request?: Request) => string;
 }
 
 type File = Express.Multer.File | { buffer: Buffer | ArrayBuffer; mimetype: string };
@@ -23,7 +22,7 @@ const assignOptions = (givenOptions: GcpOptions) => {
     if (typeof givenOptions !== 'object') {
         throw new TypeError('GcpBucket uploader options are invalid - not an object.');
     }
-    (['bucket'] as Array<keyof GcpOptions>).forEach((propName) => {
+    (['bucket'] as Array<keyof GcpOptions>).forEach(propName => {
         if (!givenOptions[propName]) {
             throw new Error(`GcpBucket uploader missing an option: \`${propName}\``);
         }
@@ -42,15 +41,15 @@ const iniStorageClient = (options: GcpOptions) => {
     return storage;
 };
 
-export const saveFiles = (bucket: Bucket, files: File[], options: GcpOptions) => {
+export const saveFiles = (bucket: Bucket, files: File[], options: GcpOptions, request?: Request) => {
     return Promise.all(
         files
-            .map((file) => ({
+            .map(file => ({
                 id: generateFileStamp(),
                 originalFile: file,
             }))
-            .map(async (file) => {
-                const fileName = options.generateFileName ? options.generateFileName(file, options) : file.id;
+            .map(async file => {
+                const fileName = options.generateFileName ? options.generateFileName(file, request) : file.id;
                 const fileId = path.posix.join(options.prefix!, fileName);
 
                 const fileStream = new Readable();
@@ -66,7 +65,10 @@ export const saveFiles = (bucket: Bucket, files: File[], options: GcpOptions) =>
                 // File should not have leading slash
                 const remoteFile = bucket.file(fileId.replace(/^\//, '')).createWriteStream(uploadParams);
                 await new Promise((resolve, reject) =>
-                    fileStream.pipe(remoteFile).on('error', reject).on('finish', resolve)
+                    fileStream
+                        .pipe(remoteFile)
+                        .on('error', reject)
+                        .on('finish', resolve)
                 );
                 return { fileId, originalFile: file.originalFile };
             })
@@ -82,8 +84,8 @@ export default (options: GcpOptions): RequestHandler => {
         if (!req.files || !req.files.length) {
             return next();
         }
-        return saveFiles(bucket, req.files, { ...options, request: req })
-            .then((files) => {
+        return saveFiles(bucket, req.files, options, req)
+            .then(files => {
                 req.files = files;
                 return next();
             })
