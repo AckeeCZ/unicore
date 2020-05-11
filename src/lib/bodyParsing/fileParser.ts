@@ -6,8 +6,8 @@ declare module 'express-serve-static-core' {
     }
 }
 
-export default function fileParser() {
+export default function fileParser(options: multer.Options = {}) {
     const storage = multer.memoryStorage();
-    const fileUpload = multer({ storage });
+    const fileUpload = multer({ storage, ...options });
     return fileUpload.any();
 }
