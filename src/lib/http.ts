@@ -1,7 +1,10 @@
+import * as composeMiddleware from 'compose-middleware';
 import { EventEmitter } from 'events';
 import express from 'express';
 import * as nodeHttp from 'http';
 import hello from './http-hello';
+import * as method from './http-method';
+
 const enableDestroy = require('server-destroy');
 
 export type RouteHandler = express.Handler;
@@ -49,6 +52,16 @@ const createServer = (options?: HttpServerOptions) => {
             startServer(server, server.options.autoStartPort);
         }
     });
+    // Bind server instance to all requests
+    server.express.use((req, _res, next) => {
+        (req as any)[requestKey.server] = server;
+        next();
+    });
+    // Assign all given routes
+    Array.from(Object.entries(server.options.routes!)).forEach(([route, handler]) => {
+        // Dont `app.use` because it only checks if the start of the route matches
+        server.express.all(route, handler);
+    });
     return server;
 };
 
@@ -89,4 +102,33 @@ const fromRequest = (req: Parameters<RouteHandler>[0], key: keyof typeof request
     }
 };
 
-export { createServer, destroyServer, fromRequest, hello, startServer };
+const customMethod = (methodName: string, handler: RouteHandler): RouteHandler => {
+    if (!nodeHttp.METHODS.includes(methodName.toUpperCase())) {
+        throw new Error(`Unsupported HTTP method: ${methodName}`);
+    }
+    return (req, res, next) => {
+        if (req.method !== methodName.toUpperCase()) {
+            return next();
+        }
+        handler(req, res, next);
+    };
+};
+const compose = (...handlers: RouteHandler[]): RouteHandler => composeMiddleware.compose(...(handlers as any));
+
+const { post, get, put, delete: del, patch } = method;
+
+export {
+    compose,
+    createServer,
+    destroyServer,
+    fromRequest,
+    hello,
+    startServer,
+    customMethod,
+    method,
+    post,
+    get,
+    put,
+    del as delete,
+    patch,
+};
