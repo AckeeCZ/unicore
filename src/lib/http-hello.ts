@@ -1,4 +1,4 @@
-import { fromRequest, RouteHandler } from './http';
+import { getRequestServer, RouteHandler } from './http';
 
 export default (): RouteHandler => (req, res) => {
     const appInfo = {
@@ -10,6 +10,6 @@ export default (): RouteHandler => (req, res) => {
         '🦄': 'Greetings!',
         'Application I am running': appInfo,
         'My time is': new Date(),
-        'I am online since': fromRequest(req, 'server').startAt,
+        'I am online since': getRequestServer(req).startAt,
     });
 };

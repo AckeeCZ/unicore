@@ -20,7 +20,7 @@ const server = http.createServer({
 
 ## TL;DR User manual
 
-### Server
+### Server start/stop
 
 - create server instance
     ```ts
@@ -34,14 +34,14 @@ const server = http.createServer({
     ```
 - automatic server start
     - via `autoStartPort` server option
-    - server starts automatically on this port on next process tick
+    - server starts automatically on given port
     ```ts
     createServer({ autoStartPort: 3000 })
     ```
 - stop server 
     ```ts
-    import { destroyServer } from 'unicore/http'
-    await destroyServer(server)
+    import { stopServer } from 'unicore/http'
+    await stopServer(server)
     ```
 - subscribe to server events
     - via `server.events` event emitter
