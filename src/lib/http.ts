@@ -12,6 +12,8 @@ export {
     stopServer,
 } from './http-server';
 
+export { controller, createController, serializeResponse, parseRequest } from './http-controller';
+
 export { RouteHandler, compose, customMethod } from './http-routing';
 
 export { get, put, post, delete, patch } from './http-method';

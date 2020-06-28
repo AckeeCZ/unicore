@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import express from 'express';
 import * as nodeHttp from 'http';
+import * as errors from './http-error';
 import * as routing from './http-routing';
 
 const enableDestroy = require('server-destroy');
@@ -8,15 +9,15 @@ const enableDestroy = require('server-destroy');
 export class HttpServerEmitter extends EventEmitter {}
 
 export interface HttpServerOptions {
-    beforeEach?: routing.RouteHandler;
+    beforeAll?: routing.RouteHandler;
     routes?: Record<string, routing.RouteHandler>;
     autoStartPort?: number;
 }
 
 export interface HttpServerEmitter extends EventEmitter {
     on(event: 'start', listener: () => void): this;
-    on(event: 'error', listener: (error: Error) => void): this;
-    emit(event: 'error', error: Error): boolean;
+    on(event: 'error', listener: (error: errors.HttpError) => void): this;
+    emit(event: 'error', error: errors.HttpError): boolean;
     emit(event: 'start'): boolean;
 }
 
@@ -49,7 +50,7 @@ const createServer = (options?: HttpServerOptions) => {
     const server: HttpServer = {
         options: {
             autoStartPort: options?.autoStartPort,
-            beforeEach: options?.beforeEach,
+            beforeAll: options?.beforeAll,
             routes: options?.routes || {},
         },
         events: new HttpServerEmitter(),
@@ -66,11 +67,18 @@ const createServer = (options?: HttpServerOptions) => {
         setRequestProp(req, REQUEST_KEY_SERVER, server);
         next();
     });
+    if (server.options.beforeAll) {
+        server.express.use(server.options.beforeAll);
+    }
     // Assign all given routes
     Array.from(Object.entries(server.options.routes!)).forEach(([route, handler]) => {
         // Dont `app.use` because it only checks if the start of the route matches
         server.express.all(route, handler);
     });
+    // Assign default error handler
+    server.express.use(((error, req, res, _cb) => {
+        server.events.emit('error', new errors.ServerRequestError(error, req, res));
+    }) as express.ErrorRequestHandler);
     return server;
 };
 

@@ -1,3 +1,4 @@
 import * as http from './http';
+import * as message from './message';
 
-export { http };
+export { http, message };

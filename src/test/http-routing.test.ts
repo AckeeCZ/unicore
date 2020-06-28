@@ -105,7 +105,7 @@ describe('HTTP - Routing', () => {
             expect(response.body).toEqual('POST');
             expect(response.statusCode).toEqual(200);
         });
-        test('chaning via next is possible - defined by the handler', async () => {
+        test.only('chaning via next is possible - defined by the handler', async () => {
             {
                 const response = await request(server)('fallthrough');
                 expect(response.body).toEqual('123');
