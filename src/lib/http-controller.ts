@@ -16,15 +16,15 @@ const createController = <
     serializeResponse: (appResponse: TAppResponse, networkResponse: THTTPResponse) => void
 ) => {
     const controller: Controller<TAppRequest, TAppResponse> = (bizHandler) => {
-        const handler: http.RouteHandler = async (req, res, cb) => {
+        const handler: http.AsyncRouteHandler = async (req, res, cb?) => {
             try {
                 const result = await bizHandler(parseRequest(req as any));
                 serializeResponse(result, res as any);
             } catch (error) {
-                cb(error);
+                cb && cb(error);
             }
         };
-        return handler;
+        return handler as http.RouteHandler;
     };
     return controller;
 };
@@ -39,9 +39,9 @@ const parseRequest: ParseRequest = (req): message.Request<typeof req> => {
         attributes: {
             ...req.headers,
             // Express route params
-            ...(req as any).params,
+            ...http.getRequestParams(req),
             // Express query params
-            ...(req as any).query,
+            ...http.getQueryParams(req),
         },
         originalRequest: req,
     };

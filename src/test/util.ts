@@ -1,9 +1,10 @@
 import requestLib from 'got';
-import * as http from '../lib/http';
+import http from 'http';
+import { servers } from '../lib/http-server';
 
-export const request = (server: http.HttpServer) => {
+export const request = (server: http.Server) => {
     return requestLib.extend({
-        prefixUrl: `http://localhost:${server.port}`,
+        prefixUrl: `http://localhost:${servers.get(server)?.port!}`,
         throwHttpErrors: false,
     });
 };

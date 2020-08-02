@@ -1,44 +1,52 @@
 import * as bodyParser from 'body-parser';
-import { http } from '../lib';
+import http from 'http';
 import * as TodoApp from './http-todoapp';
 import { request } from './util';
+import { createController, parseRequest, serializeResponse, get, route, compose, controller, post, delete as del, put, startServer, stopServer } from '../lib/http';
 
 describe('HTTP JSON CRUD', () => {
-    const controller = http.createController(
-        (req): TodoApp.AuthenticatedRequest => ({ ...http.parseRequest(req), user: (req as any).user }),
-        http.serializeResponse
+    const controller = createController(
+        (req): TodoApp.AuthenticatedRequest => ({ ...parseRequest(req), user: (req as any).user }),
+        serializeResponse
     );
-    const server = http.createServer({
-        beforeAll: http.compose(TodoApp.mw.generateRequestID, bodyParser.json()),
-        routes: {
-            '/todos': http.compose(http.get(controller(TodoApp.listTodo)), http.post(controller(TodoApp.createTodo))),
-            '/todos/:todoID': http.compose(
-                http.delete(controller(TodoApp.deleteTodo)),
-                http.get(controller(TodoApp.getTodo)),
-                http.put(controller(TodoApp.updateTodo))
-            ),
-            '/me': http.compose(TodoApp.mw.authentication, http.get(controller(TodoApp.getSessionUser))),
-        },
-    });
-    server.events.on('error', (error) => {
-        if (!('request' in error)) {
-            return;
-        }
-        const { request, response } = error;
-        response.statusCode = 500;
-        http.serializeResponse(
-            {
-                data: { error: 'Server error' },
-                attributes: { 'x-request-id': (request as any).id },
-            },
-            response
-        );
-    });
+    const server = new http.Server(
+        compose(
+            TodoApp.mw.generateRequestID,
+            bodyParser.json(),
+            route('/todos', compose(
+                get(controller(TodoApp.listTodo)),
+                post(controller(TodoApp.createTodo)),
+            )),
+            route('/todos/:todoID', compose(
+                del(controller(TodoApp.deleteTodo)),
+                get(controller(TodoApp.getTodo)),
+                put(controller(TodoApp.updateTodo)),
+            )),
+            route('/me', compose(
+                TodoApp.mw.authentication,
+                get(controller(TodoApp.getSessionUser)),
+            ))
+        )
+    );
+    // server.events.on('error', (error) => {
+    //     if (!('request' in error)) {
+    //         return;
+    //     }
+    //     const { request, response } = error;
+    //     response.statusCode = 500;
+    //     http.serializeResponse(
+    //         {
+    //             data: { error: 'Server error' },
+    //             attributes: { 'x-request-id': (request as any).id },
+    //         },
+    //         response
+    //     );
+    // });
     beforeAll(async () => {
-        await http.startServer(server, 0);
+        await startServer(server, 0);
     });
     afterAll(async () => {
-        await http.stopServer(server);
+        await stopServer(server);
     });
     test('Todo CRUD', async () => {
         {

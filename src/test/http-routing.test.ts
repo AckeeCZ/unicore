@@ -1,120 +1,184 @@
-import { http } from '../lib';
+import http from 'http';
+import { compose, route, startServer, stopServer, hello, RouteHandler, method, get, put, post, delete as del, getRequestParams, getQueryParams } from '../lib/http';
 import { request } from './util';
+import { format as sprintf } from 'util';
 
 describe('HTTP - Routing', () => {
+    const createServer = async (handler: http.RequestListener) => {
+        const server = new http.Server(handler);
+        await startServer(server, 0);
+        return server;
+    }
     describe('Hello', () => {
-        const server = http.createServer({
-            routes: {
-                '/': http.hello(),
-            },
-        });
+        const server = new http.Server(hello());
         beforeAll(async () => {
-            await http.startServer(server, 0);
+            await startServer(server, 0);
         });
         afterAll(async () => {
-            await http.stopServer(server);
+            await stopServer(server);
         });
-        it('Says hello', async () => {
+        test('Says hello', async () => {
             const response = await request(server).get('');
             expect(response.statusCode).toEqual(200);
         });
     });
     describe('Basic methods have direct API support', () => {
-        const respond: http.RouteHandler = (req, res) => {
+        const respond: RouteHandler = (req, res) => {
             res.end(req.method);
         };
-        const server = http.createServer({
-            routes: {
-                '/get': http.get(respond),
-                '/post': http.post(respond),
-                '/delete': http.delete(respond),
-                '/put': http.put(respond),
-                '/patch': http.patch(respond),
-            },
+        let server: http.Server;
+        afterEach(async () => {
+            await stopServer(server);
         });
-        beforeAll(async () => {
-            await http.startServer(server, 0);
-        });
-        afterAll(async () => {
-            await http.stopServer(server);
-        });
-        ['get', 'post', 'delete', 'put', 'patch'].forEach((method) => {
-            test(`HTTP ${method}`, async () => {
-                const response = await request(server)(method, { method: method as any });
-                expect(response.body).toEqual(method.toUpperCase());
-                expect(response.statusCode).toEqual(200);
-            });
-        });
-    });
-    describe('Any Node.js supported method can be defined via `method`', () => {
-        const respond: http.RouteHandler = (req, res) => {
-            res.end(req.method);
-        };
-        const server = http.createServer({
-            routes: {
-                // http.method.* contains all methods supported by Node.js
-                // Trace for example:
-                '/': http.method.trace(respond),
-                '/patch': http.customMethod('patch', respond),
-            },
-        });
-        beforeAll(async () => {
-            await http.startServer(server, 0);
-        });
-        afterAll(async () => {
-            await http.stopServer(server);
-        });
-        test('HTTP trace', async () => {
-            const response = await request(server)({ method: 'trace' });
-            expect(response.body).toEqual('TRACE');
+        test('GET', async() => {
+            server = await createServer(get(respond));
+            const response = await request(server)('api/v1/route', { method: 'GET' });
+            expect(response.body).toEqual('GET');
             expect(response.statusCode).toEqual(200);
         });
-        test('HTTP patch', async () => {
-            const response = await request(server)('patch', { method: 'patch' });
-            expect(response.body).toEqual('PATCH');
+        test('PUT', async() => {
+            server = await createServer(put(respond));
+            const response = await request(server)('api/v1/route', { method: 'PUT' });
+            expect(response.body).toEqual('PUT');
             expect(response.statusCode).toEqual(200);
         });
-    });
-    describe('Multiple methods per route', () => {
-        const respond = (response: string): http.RouteHandler => (_req, res) => {
-            res.end(response);
-        };
-        const server = http.createServer({
-            routes: {
-                '/': http.compose(http.get(respond('GET1')), http.post(respond('POST')), http.get(respond('GET2'))),
-                '/fallthrough': http.compose(
-                    http.get((_req, res, next) => (res.write('1'), next())),
-                    (_req, res, next) => (res.write('2'), next()),
-                    (_req, res) => res.end('3')
-                ),
-            },
-        });
-        beforeAll(async () => {
-            await http.startServer(server, 0);
-        });
-        afterAll(async () => {
-            await http.stopServer(server);
-        });
-        test('first method handler responds - no auto fall through', async () => {
-            const response = await request(server)({ method: 'GET' });
-            expect(response.body).toEqual('GET1');
-            expect(response.statusCode).toEqual(200);
-        });
-        test('another method also works', async () => {
-            const response = await request(server)({ method: 'POST' });
+        test('POST', async() => {
+            server = await createServer(post(respond));
+            const response = await request(server)('api/v1/route', { method: 'POST' });
             expect(response.body).toEqual('POST');
             expect(response.statusCode).toEqual(200);
         });
-        test.only('chaning via next is possible - defined by the handler', async () => {
+        test('DELETE', async() => {
+            server = await createServer(del(respond));
+            const response = await request(server)('api/v1/route', { method: 'DELETE' });
+            expect(response.body).toEqual('DELETE');
+            expect(response.statusCode).toEqual(200);
+        });
+    });
+    describe('Any Node.js supported method can accessed via `method`', () => {
+        const respond: RouteHandler = (req, res) => {
+            res.end(req.method);
+        };
+        let server: http.Server;
+        afterEach(async () => {
+            await stopServer(server);
+        });
+        (Object.keys(method) as Array<keyof typeof method>)
+            .forEach(m => {
+                const onMethod = method[m];
+                const methodName = m.toUpperCase();
+                // These two methods behave strangely though and have no idea
+                // what these do and how should behave. Yet.
+                if (['CONNECT', 'MSEARCH'].includes(methodName)) {
+                    return test.todo(methodName);
+                }
+                test(methodName, async () => {
+                    server = await createServer(onMethod(respond));
+                    const response = await request(server)('api/v1/route', { method: methodName as any });
+                    // Some methods allow no body and are cut by Node.js
+                    // automatically
+                    if (!['HEAD'].includes(methodName)) {
+                        expect(response.body).toEqual(methodName);
+                    }
+                    expect(response.statusCode).toEqual(200);
+                });
+            });
+    });
+    describe('Pathname routing', () => {
+        const respond: RouteHandler = (req, res) => {
+            res.end(req.url!);
+        };
+        let server: http.Server;
+        afterEach(async () => {
+            await stopServer(server);
+        });
+        test('Basic routing', async () => {
+            server = await createServer(
+                compose(
+                    route('/api/v1/foo', respond),
+                    route('/api/v1/bar', respond),
+                )
+            );
             {
-                const response = await request(server)('fallthrough');
-                expect(response.body).toEqual('123');
+                const response = await request(server)('api/v1/foo');
+                expect(response.body).toEqual('/api/v1/foo');
                 expect(response.statusCode).toEqual(200);
             }
             {
-                const response = await request(server).post('fallthrough');
-                expect(response.body).toEqual('23');
+                const response = await request(server)('api/v1/bar');
+                expect(response.body).toEqual('/api/v1/bar');
                 expect(response.statusCode).toEqual(200);
+            }
+        });
+    });
+    describe('Method/Pathname routing', () => {
+        const respond: RouteHandler = (req, res) => {
+            res.end(sprintf('%s %s', req.method!, req.url!));
+        };
+        let server: http.Server;
+        afterEach(async () => {
+            await stopServer(server);
+        });
+        test('Basic routing', async () => {
+            server = await createServer(
+                compose(
+                    route('/api/v1/foo', compose(get(respond), post(respond))),
+                    route('/api/v1/bar', compose(get(respond), post(respond))),
+                )
+            );
+            {
+                const response = await request(server)('api/v1/foo', { method: 'GET' });
+                expect(response.statusCode).toEqual(200);
+                expect(response.body).toEqual('GET /api/v1/foo');
+            }
+            {
+                const response = await request(server)('api/v1/foo', { method: 'POST' });
+                expect(response.statusCode).toEqual(200);
+                expect(response.body).toEqual('POST /api/v1/foo');
+            }
+            {
+                const response = await request(server)('api/v1/bar', { method: 'POST' });
+                expect(response.statusCode).toEqual(200);
+                expect(response.body).toEqual('POST /api/v1/bar');
+            }
+            {
+                const response = await request(server)('api/v1/bar', { method: 'GET' });
+                expect(response.statusCode).toEqual(200);
+                expect(response.body).toEqual('GET /api/v1/bar');
+            }
+        });
+    });
+    describe('Route parameters', () => {
+        const respond: RouteHandler = (req, res) => {
+            res.end(JSON.stringify(getRequestParams(req)));
+        };
+        let server: http.Server;
+        afterEach(async () => {
+            await stopServer(server);
+        });
+        test('Basic params', async () => {
+            server = await createServer(route('/api/v1/foo/:fooID', respond));
+            {
+                const response = await request(server)('api/v1/foo/123', { method: 'GET', responseType: 'json' });
+                expect(response.statusCode).toEqual(200);
+                expect(response.body).toMatchObject({ fooID: '123' })
+            }
+        });
+    });
+    describe('Route query parameters', () => {
+        const respond: RouteHandler = (req, res) => {
+            res.end(JSON.stringify(getQueryParams(req)));
+        };
+        let server: http.Server;
+        afterEach(async () => {
+            await stopServer(server);
+        });
+        test('Basic params', async () => {
+            server = await createServer(route('/api/v1/foo', respond));
+            {
+                const response = await request(server)('api/v1/foo?bar=true', { method: 'GET', responseType: 'json' });
+                expect(response.statusCode).toEqual(200);
+                expect(response.body).toMatchObject({ bar: 'true' })
             }
         });
     });

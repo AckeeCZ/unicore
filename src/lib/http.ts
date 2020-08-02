@@ -14,6 +14,6 @@ export {
 
 export { controller, createController, serializeResponse, parseRequest } from './http-controller';
 
-export { RouteHandler, compose, customMethod } from './http-routing';
+export { AsyncRouteHandler, RouteHandler, compose, customMethod, route, getRequestParams, getQueryParams } from './http-routing';
 
 export { get, put, post, delete, patch } from './http-method';
