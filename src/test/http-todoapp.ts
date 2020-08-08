@@ -8,13 +8,13 @@ export interface Todo {
 export type User = { username: string };
 export type AuthenticatedRequest<TData = any, TAttributes = any> = message.Request<TData, TAttributes> & { user: User };
 
-const generateRequestID: http.AsyncRouteHandler = (req, _res, cb) => {
+const generateRequestID: http.RouteHandler = async (req, res) => {
     let requestID = req.headers['X-Request-ID'];
     if (!requestID) {
         requestID = crypto.randomBytes(10).toString('hex');
     }
+    res.setHeader('X-Request-ID', requestID);
     (req as any).id = requestID;
-    cb();
 };
 let todos: Todo[] = [];
 let idCounter = 1;
@@ -59,7 +59,7 @@ const getSessionUser = async (request: AuthenticatedRequest) => {
     }
     return request.user;
 };
-const authentication: http.AsyncRouteHandler = async (req, _res, cb) => {
+const authentication: http.RouteHandler = async (req, _res) => {
     const auth = req.headers.authorization;
     let user = undefined;
     if (auth) {
@@ -77,7 +77,6 @@ const authentication: http.AsyncRouteHandler = async (req, _res, cb) => {
         }
     }
     (req as any).user = user;
-    cb();
 };
 
 const mw = {

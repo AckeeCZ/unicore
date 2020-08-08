@@ -1,47 +1,50 @@
 import * as bodyParser from 'body-parser';
 import http from 'http';
+import {
+    compose,
+    createController,
+    delete as del,
+    expressjs,
+    get,
+    parseRequest,
+    post,
+    put,
+    route,
+    serializeResponse,
+    startServer,
+    stopServer,
+} from '../lib/http';
 import * as TodoApp from './http-todoapp';
 import { request } from './util';
-import { createController, parseRequest, serializeResponse, get, route, compose, controller, post, delete as del, put, startServer, stopServer } from '../lib/http';
 
 describe('HTTP JSON CRUD', () => {
     const controller = createController(
         (req): TodoApp.AuthenticatedRequest => ({ ...parseRequest(req), user: (req as any).user }),
-        serializeResponse
+        serializeResponse,
+        (error, _req, res) => {
+            res.statusCode = 500;
+            res.end(JSON.stringify(error.message));
+        }
     );
-    const server = new http.Server(
+    const server = new http.Server((req, res) => {
         compose(
             TodoApp.mw.generateRequestID,
-            bodyParser.json(),
-            route('/todos', compose(
-                get(controller(TodoApp.listTodo)),
-                post(controller(TodoApp.createTodo)),
-            )),
-            route('/todos/:todoID', compose(
-                del(controller(TodoApp.deleteTodo)),
-                get(controller(TodoApp.getTodo)),
-                put(controller(TodoApp.updateTodo)),
-            )),
-            route('/me', compose(
-                TodoApp.mw.authentication,
-                get(controller(TodoApp.getSessionUser)),
-            ))
-        )
-    );
-    // server.events.on('error', (error) => {
-    //     if (!('request' in error)) {
-    //         return;
-    //     }
-    //     const { request, response } = error;
-    //     response.statusCode = 500;
-    //     http.serializeResponse(
-    //         {
-    //             data: { error: 'Server error' },
-    //             attributes: { 'x-request-id': (request as any).id },
-    //         },
-    //         response
-    //     );
-    // });
+            expressjs(bodyParser.json()),
+            route('/todos', compose(get(controller(TodoApp.listTodo)), post(controller(TodoApp.createTodo)))),
+            route(
+                '/todos/:todoID',
+                compose(
+                    del(controller(TodoApp.deleteTodo)),
+                    get(controller(TodoApp.getTodo)),
+                    put(controller(TodoApp.updateTodo))
+                )
+            ),
+            route('/me', compose(TodoApp.mw.authentication, get(controller(TodoApp.getSessionUser))))
+        )(req, res).catch((error) => {
+            res.statusCode = 500;
+            res.end(JSON.stringify(error.message));
+        });
+    });
     beforeAll(async () => {
         await startServer(server, 0);
     });

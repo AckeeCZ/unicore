@@ -1,20 +1,15 @@
 import * as nodeHttp from 'http';
-import { promisify, format as sprintf } from 'util';
 import { match as matchPath } from 'path-to-regexp';
 import { URL } from 'url';
+import { format as sprintf } from 'util';
 
-export type RouteHandler = nodeHttp.RequestListener
-export type AsyncRouteHandler = (req: nodeHttp.IncomingMessage, res: nodeHttp.ServerResponse, cb: (error?: Error) => void) => void;
+export type RouteHandler = nodeHttp.RequestListener;
+export type AsyncRouteHandler = (req: nodeHttp.IncomingMessage, res: nodeHttp.ServerResponse) => Promise<void>;
 
-const compose = (...cbHandlers: AsyncRouteHandler[]): RouteHandler => {
-    const handlers = cbHandlers.map((handler) => promisify(handler));
+const compose = (...handlers: RouteHandler[]): AsyncRouteHandler => {
     return async (req, res) => {
-        try {
-            for (const handler of handlers) {
-                await handler(req, res);
-            }
-        } catch (error) {
-            // TODO: Error
+        for (const handler of handlers) {
+            await handler(req, res);
         }
     };
 };
@@ -32,45 +27,35 @@ const getQueryParams = <T extends {} = Record<string | number | symbol, any>>(re
 // Route call handler iff Route string is matched with the one in request
 //  - parses route params like /foo/:id
 //  - parses query params like /foo?bar=true
-const route = (routeString: string, handler: AsyncRouteHandler): RouteHandler => {
+const route = (routeString: string, handler: RouteHandler): RouteHandler => {
     const matcher = matchPath(routeString, { end: true, strict: false });
-    const requestHandler: AsyncRouteHandler = async (req, res, cb?) => {
+    return async (req, res) => {
         const url = new URL(req.url!, sprintf('http://%s', req.headers.host));
         const requestRouteString = url.pathname;
         const match = matcher(requestRouteString);
         if (!match) {
-            return cb && cb();
+            return;
         }
         (req as any)[REQUEST_KEY_PARAMS] = match.params;
-        (req as any)[REQUEST_KEY_QUERY_PARAMS] = Array.from(url.searchParams.entries())
-            .reduce((acc, pair) => (acc[pair[0]] = pair[1], acc), {} as any);
-        handler(req, res, cb);
+        (req as any)[REQUEST_KEY_QUERY_PARAMS] = Array.from(url.searchParams.entries()).reduce(
+            (acc, pair) => ((acc[pair[0]] = pair[1]), acc),
+            {} as any
+        );
+        return handler(req, res);
     };
-    // TODO Same as with custom method return override :/
-    return requestHandler as RouteHandler;
 };
 
 // CustomMethod calls handler iff method is matched with the one in request
-const customMethod = (methodName: string, cbHandler: RouteHandler) => {
+const customMethod = (methodName: string, handler: RouteHandler): RouteHandler => {
     if (!nodeHttp.METHODS.includes(methodName.toUpperCase())) {
         throw new Error(`Unsupported HTTP method: ${methodName}`);
     }
-    const handler = promisify(cbHandler);
-    const requestHandler: AsyncRouteHandler = async (req, res, cb) => {
+    return async (req, res) => {
         if (req.method !== methodName.toUpperCase()) {
-            return cb();
+            return;
         }
-        try {
-            await handler(req, res);
-            cb();
-        } catch (error) {
-            // TODO Guard cb passed to `handler` to prevent calling it twice
-            // e.g. when handler calls cb(error), but crashes after
-            cb(error);
-        }
+        return handler(req, res);
     };
-    // To allow this pass to native Node.js server as a listener
-    return requestHandler as RouteHandler;
 };
 
 export { compose, customMethod, route, getRequestParams, getQueryParams };

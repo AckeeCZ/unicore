@@ -13,18 +13,25 @@ const createController = <
     THTTPResponse extends nodeHttp.ServerResponse = nodeHttp.ServerResponse
 >(
     parseRequest: (networkRequest: THTTPRequest) => TAppRequest,
-    serializeResponse: (appResponse: TAppResponse, networkResponse: THTTPResponse) => void
+    serializeResponse: (appResponse: TAppResponse, networkResponse: THTTPResponse) => void,
+    serializeErrorResponse?: (error: Error, networkRequest: THTTPRequest, networkResponse: THTTPResponse) => void
 ) => {
     const controller: Controller<TAppRequest, TAppResponse> = (bizHandler) => {
-        const handler: http.AsyncRouteHandler = async (req, res, cb?) => {
-            try {
-                const result = await bizHandler(parseRequest(req as any));
-                serializeResponse(result, res as any);
-            } catch (error) {
-                cb && cb(error);
-            }
+        if (serializeErrorResponse) {
+            return async (req, res) => {
+                try {
+                    const result = await bizHandler(parseRequest(req as any));
+                    serializeResponse(result, res as any);
+                } catch (error) {
+                    serializeErrorResponse(error, req as any, res as any);
+                }
+            };
+        }
+        // No error handling if no serializeErrorResponse is passed
+        return async (req, res) => {
+            const result = await bizHandler(parseRequest(req as any));
+            serializeResponse(result, res as any);
         };
-        return handler as http.RouteHandler;
     };
     return controller;
 };
