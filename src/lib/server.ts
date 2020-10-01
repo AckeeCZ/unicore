@@ -21,7 +21,7 @@ declare module 'express-serve-static-core' {
 }
 
 type PromisedListen = (...args: Parameters<core.Express['listen']>) => Promise<http.Server>;
-const patchListen = (app: core.Express) => (listen: core.Express['listen']): PromisedListen => {
+const patchListen = (app: core.Express) => (listen: any): PromisedListen => {
     app.destroy = () => Promise.reject(new Error('Server did not start yet'));
     return (...args) => {
         return new Promise((resolve, reject) => {
