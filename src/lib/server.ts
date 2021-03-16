@@ -3,6 +3,7 @@ import * as core from 'express-serve-static-core';
 import * as http from 'http';
 // @ts-ignore
 import * as destroyable from 'server-destroy';
+import { promisify } from 'util';
 import { bindExpress as bindSentry, SentrySettings } from './monitoring/sentry';
 
 export interface ServerOptions {
@@ -32,7 +33,7 @@ const patchListen = (app: core.Express) => (listen: any): PromisedListen => {
                 destroyable(server);
                 resolve(server);
             });
-            app.destroy = async () => server.destroy();
+            app.destroy = async () => await promisify(server.destroy)();
         });
     };
 };
