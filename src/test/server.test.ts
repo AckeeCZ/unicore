@@ -23,12 +23,12 @@ describe('Server', () => {
                     .then(resolve)
                     .catch(reject)
             );
-            server.destroy();
+            await server.destroy();
         });
         test('Destroyable server', async () => {
             const server = createServer();
             await server.listenAsync(3000);
-            server.destroy();
+            await server.destroy();
         });
     });
     describe('Body parsing', () => {
