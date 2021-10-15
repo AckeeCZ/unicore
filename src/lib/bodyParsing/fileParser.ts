@@ -1,4 +1,4 @@
-import * as multer from 'multer';
+import * as multer from 'multer'
 
 declare module 'express-serve-static-core' {
     interface Application {
@@ -7,7 +7,7 @@ declare module 'express-serve-static-core' {
 }
 
 export default function fileParser(options: multer.Options = {}) {
-    const storage = multer.memoryStorage();
-    const fileUpload = multer({ storage, ...options });
-    return fileUpload.any();
+    const storage = multer.memoryStorage()
+    const fileUpload = multer({ storage, ...options })
+    return fileUpload.any()
 }

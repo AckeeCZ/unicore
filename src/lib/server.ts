@@ -1,7 +1,7 @@
 import * as express from 'express'
 import * as core from 'express-serve-static-core'
 import * as http from 'http'
-// @ts-expect-error server-destroy uses old import style
+// @ts-expect-error server-destroy uses old import
 import * as destroyable from 'server-destroy'
 import { promisify } from 'util'
 
@@ -28,6 +28,8 @@ const patchListen = (app: core.Express) => (listen: any): PromisedListen => {
                 destroyable(server)
                 resolve(server)
             })
+            // Lint misses the promise here due to not understanding server-destroy functionality
+            // eslint-disable-next-line @typescript-eslint/return-await
             app.destroy = async () => await promisify(server.destroy)()
         })
     }
