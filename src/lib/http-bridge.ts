@@ -1,10 +1,12 @@
 import { HandleFunction, NextHandleFunction, SimpleHandleFunction } from 'connect';
 import { http } from 'lib';
+import { nextTick } from 'process';
 
 const expressjs = (handler: HandleFunction): http.RouteHandler => {
     let wrapper: NextHandleFunction;
     if (handler.length <= 2) {
-        wrapper = (req, res, _next) => {
+        wrapper = (req, res, next) => {
+            res.once('close', () => next());
             (handler as SimpleHandleFunction)(req, res);
         };
     } else if (handler.length === 3) {

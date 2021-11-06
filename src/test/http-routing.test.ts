@@ -1,5 +1,5 @@
 import http from 'http';
-import { compose, route, startServer, stopServer, hello, RouteHandler, method, get, put, post, delete as del, getRequestParams, getQueryParams } from '../lib/http';
+import { compose, route, startServer, stopServer, hello, RouteHandler, method, get, put, post, delete as del, getRequestParams, getQueryParams, customMethod } from '../lib/http';
 import { request } from './util';
 import { format as sprintf } from 'util';
 
@@ -145,6 +145,52 @@ describe('HTTP - Routing', () => {
                 const response = await request(server)('api/v1/bar', { method: 'GET' });
                 expect(response.statusCode).toEqual(200);
                 expect(response.body).toEqual('GET /api/v1/bar');
+            }
+        });
+        // WIP POC Of doing routes the right way.
+        test.skip('Magic routing', async () => {
+            type HttpHandler = ReturnType<typeof route>;
+            const noop = () => Promise.resolve();
+            const xroute = (name: string, handler: HttpHandler) => {
+                const [method, pathname] = String(name).split(' ');
+                return {
+                    name,
+                    listener: route(pathname, customMethod(method, handler || noop)),
+                    method,
+                    pathname,
+                };
+            };
+            const routeplus = (handler: HttpHandler): ReturnType<typeof xroute> => ({
+                listener: handler,
+                method: '',
+                name: '',
+                pathname: '',
+            });
+            const compileRouter = (routes: Record<string, ReturnType<typeof xroute>>) => {
+                return compose(
+                    ...Object.entries(routes)
+                        .map(([magicName, handler]) => {
+                            const r = xroute(magicName, handler.listener);
+                            routes[magicName] = r;
+                            return r.listener;
+                        })
+                );
+            };
+            const router = {
+                'GET /api/v1/foo': routeplus(respond),
+            };
+            const routes = compileRouter(router);
+            server = await createServer(routes);
+            {
+                const r = router['GET /api/v1/foo'];
+                const response = await request(server)(r.pathname, { method: r.method as any });
+                expect(response.statusCode).toEqual(200);
+                expect(response.body).toEqual('GET /api/v1/foo');
+            }
+            {
+                const response = await request(server)('api/v1/bar', { method: 'POST' });
+                expect(response.statusCode).toEqual(200);
+                expect(response.body).toEqual('POST /api/v1/bar');
             }
         });
     });

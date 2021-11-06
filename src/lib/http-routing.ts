@@ -5,12 +5,41 @@ import { format as sprintf } from 'util';
 
 export type RouteHandler = nodeHttp.RequestListener;
 export type AsyncRouteHandler = (req: nodeHttp.IncomingMessage, res: nodeHttp.ServerResponse) => Promise<void>;
+export type Middleware = (
+    req: Parameters<RouteHandler>[0],
+    res: Parameters<RouteHandler>[1],
+    next: () => Promise<void>
+) => AsyncRouteHandler;
 
-const compose = (...handlers: RouteHandler[]): AsyncRouteHandler => {
-    return async (req, res) => {
-        for (const handler of handlers) {
-            await handler(req, res);
+
+const chainNextMiddleware = async (middlewares: Array<Middleware>, req: any, res: any, i: number): Promise<void>  => {
+    if (i < 0 || i >= middlewares.length) {
+        return;
+    }
+    const mw = middlewares[i];
+    await mw();
+    return chainNextMiddleware()
+};
+
+// middlewares[0](req, res, () => {
+//    middlewares[1](req, res, () => {
+//       ...
+//    })
+// })
+// -> 
+
+const compose = (...middlewares: Array<AsyncRouteHandler | Middleware>): AsyncRouteHandler => {
+    const mws = middlewares.map((mw): Middleware => {
+        if (mw.length == 2) {
+            // @ts-ignore
+            return (req, res, _next) => {
+                return (mw as AsyncRouteHandler)(req, res);
+            };
         }
+        return mw as Middleware;
+    });
+    return async (req, res) => {
+        await chainNextMiddleware(mws, req, res, 0);
     };
 };
 
