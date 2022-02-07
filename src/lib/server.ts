@@ -1,14 +1,9 @@
-import * as express from 'express';
-import * as core from 'express-serve-static-core';
-import * as http from 'http';
-// @ts-ignore
-import * as destroyable from 'server-destroy';
-import { promisify } from 'util';
-import { bindExpress as bindSentry, SentrySettings } from './monitoring/sentry';
-
-export interface ServerOptions {
-    sentry?: SentrySettings;
-}
+import * as express from 'express'
+import * as core from 'express-serve-static-core'
+import * as http from 'http'
+// @ts-expect-error server-destroy uses old import
+import * as destroyable from 'server-destroy'
+import { promisify } from 'util'
 
 declare module 'express-serve-static-core' {
     interface Extended {
@@ -21,31 +16,31 @@ declare module 'express-serve-static-core' {
     interface Application extends Extended {}
 }
 
-type PromisedListen = (...args: Parameters<core.Express['listen']>) => Promise<http.Server>;
+type PromisedListen = (...args: Parameters<core.Express['listen']>) => Promise<http.Server>
 const patchListen = (app: core.Express) => (listen: any): PromisedListen => {
-    app.destroy = () => Promise.reject(new Error('Server did not start yet'));
+    app.destroy = () => Promise.reject(new Error('Server did not start yet'))
     return (...args) => {
         return new Promise((resolve, reject) => {
             const server = listen(...args, (error?: Error) => {
                 if (error) {
-                    return reject(error);
+                    return reject(error)
                 }
-                destroyable(server);
-                resolve(server);
-            });
-            app.destroy = async () => await promisify(server.destroy)();
-        });
-    };
-};
+                destroyable(server)
+                resolve(server)
+            })
+            // Lint misses the promise here due to not understanding server-destroy functionality
+            // eslint-disable-next-line @typescript-eslint/return-await
+            app.destroy = async () => await promisify(server.destroy)()
+        })
+    }
+}
 
-type Unicore = core.Express & { listenAsync: PromisedListen };
+type Unicore = core.Express & { listenAsync: PromisedListen }
 
-export const createServer = (options?: ServerOptions): Unicore => {
-    const app = express();
-    app.startAt = new Date();
-    bindSentry(app, options && options.sentry);
-    const core = Object.assign(app, { listenAsync: patchListen(app)(app.listen.bind(app)) });
-    return core;
-};
+export const createServer = (): Unicore => {
+    const app = express()
+    app.startAt = new Date()
+    return Object.assign(app, { listenAsync: patchListen(app)(app.listen.bind(app)) })
+}
 
-export const createRouter = express.Router;
+export const createRouter = express.Router

@@ -13,11 +13,12 @@ export default class HttpJsonError extends Error {
         public readonly status: number,
         public readonly message: string,
         public readonly errorCode: string = '',
+        // eslint-disable-next-line @typescript-eslint/ban-types
         public readonly errorData?: object
     ) {
-        super(message);
-        Object.setPrototypeOf(this, new.target.prototype);
-        this.name = this.constructor.name;
+        super(message)
+        Object.setPrototypeOf(this, new.target.prototype)
+        this.name = this.constructor.name
     }
 
     public toJSON() {
@@ -28,6 +29,6 @@ export default class HttpJsonError extends Error {
             errorData: this.errorData,
             errorClass: this.constructor.name,
             stack: this.stack,
-        };
+        }
     }
 }
