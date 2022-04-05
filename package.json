@@ -10,9 +10,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "engines": {
-    "node": ">=10.14.0"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/AckeeCZ/unicore"
