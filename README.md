@@ -1,3 +1,10 @@
+<div align="center">
+
+## DEPRECATION NOTICE
+
+This package is no longer maintained.
+</div>
+
 # Unicore
 
 ###### Based on this [template](https://github.com/AckeeCZ/package-template/tree/6febde96d20cfec270e74d1557ba7644ff834e8c)
